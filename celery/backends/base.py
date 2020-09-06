@@ -242,6 +242,12 @@ class Backend(object):
         # need below import for test for some crazy reason
         from celery import group  # pylint: disable
         app = self.app
+
+        # indico
+        # Revoke causes callbacks id to be None
+        if callback.id is None and callback.tasks:
+            callback.id = callback.tasks[0].id
+
         try:
             backend = app._tasks[callback.task].backend
         except KeyError:
