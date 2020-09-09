@@ -1,0 +1,9 @@
+pytest-cov
+pytest-sugar
+pytest-travis-fold
+codecov
+-r extras/redis.txt
+-r extras/sqlalchemy.txt
+-r extras/pymemcache.txt
+-r extras/thread.txt
+-r extras/auth.txt
