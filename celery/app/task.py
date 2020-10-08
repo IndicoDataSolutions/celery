@@ -80,6 +80,7 @@ class Context:
     taskset = None   # compat alias to group
     group = None
     group_index = None
+    trailer_request = []
     chord = None
     chain = None
     utc = None
@@ -114,6 +115,7 @@ class Context:
             'parent_id': self.parent_id,
             'group_id': self.group,
             'group_index': self.group_index,
+            'trailer_request': self.trailer_request or [],
             'chord': self.chord,
             'chain': self.chain,
             'link': self.callbacks,
@@ -889,6 +891,7 @@ class Task:
             chord=chord,
             group_id=self.request.group,
             group_index=self.request.group_index,
+            trailer_request=self.request.trailer_request,
             root_id=self.request.root_id,
         )
         sig.freeze(self.request.id)
@@ -916,6 +919,7 @@ class Task:
         sig.set(
             group_id=self.request.group,
             group_index=self.request.group_index,
+            trailer_request=self.request.trailer_request,
             chord=self.request.chord,
             root_id=self.request.root_id,
         )
