@@ -225,6 +225,9 @@ class Signature(dict):
         args = args if args else ()
         kwargs = kwargs if kwargs else {}
         options = options if options else {}
+        self.options["link_error"] = (
+            self.options.get("link_error", []) + options.pop("link_error", [])
+        )
         if self.immutable and not force:
             return (self.args, self.kwargs,
                     dict(self.options,
