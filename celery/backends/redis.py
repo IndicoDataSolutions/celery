@@ -1,4 +1,5 @@
 """Redis result store backend."""
+import uuid
 import time
 from contextlib import contextmanager
 from functools import partial
@@ -12,7 +13,7 @@ from kombu.utils.url import _parse_url
 from celery import states
 from celery._state import task_join_will_block
 from celery.canvas import maybe_signature
-from celery.exceptions import BackendStoreError, ChordError, ImproperlyConfigured
+from celery.exceptions import BackendStoreError, ChordError, ImproperlyConfigured, TaskRevokedError
 from celery.result import GroupResult, allow_join_result
 from celery.utils.functional import dictfilter
 from celery.utils.log import get_logger
@@ -157,7 +158,8 @@ class ResultConsumer(BaseResultConsumer):
     def consume_from(self, task_id):
         if self._pubsub is None:
             return self.start(task_id)
-        self._consume_from(task_id)
+        else:
+            self._consume_from(task_id)
 
     def _consume_from(self, task_id):
         key = self._get_key_for_task(task_id)
@@ -273,6 +275,7 @@ class RedisBackend(BaseKeyValueStoreBackend, AsyncBackendMixin):
         self.connection_errors, self.channel_errors = (
             get_redis_error_classes() if get_redis_error_classes
             else ((), ()))
+
         self.result_consumer = self.ResultConsumer(
             self, self.app, self.accept,
             self._pending_results, self._pending_messages,
@@ -404,6 +407,10 @@ class RedisBackend(BaseKeyValueStoreBackend, AsyncBackendMixin):
         _, tid, state, retval = decode(tup)
         if state in EXCEPTION_STATES:
             retval = self.exception_to_python(retval)
+
+        if isinstance(retval, TaskRevokedError):
+            raise retval
+
         if state in PROPAGATE_STATES:
             raise ChordError(f'Dependency {tid} raised {retval!r}')
         return retval
@@ -494,6 +501,15 @@ class RedisBackend(BaseKeyValueStoreBackend, AsyncBackendMixin):
                     resl = [unpack(tup, decode) for tup in resl]
                 try:
                     callback.delay(resl)
+                except TaskRevokedError as exc:
+                    logger.exception(
+                        'Group %r task was revoked: %r', request.group, exc)
+                    if callback.id is None:
+                        callback.id = str(uuid.uuid4())
+                    return self.chord_error_from_stack(
+                        callback,
+                        exc
+                    )
                 except Exception as exc:  # pylint: disable=broad-except
                     logger.exception(
                         'Chord callback for %r raised: %r', request.group, exc)
