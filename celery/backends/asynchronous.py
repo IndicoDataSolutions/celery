@@ -146,7 +146,7 @@ class AsyncBackendMixin:
                 bucket.append(node)
             else:
                 self._collect_into(node, bucket)
-
+        print(f"WAITING 2 {result} {result.on_ready}")
         for _ in self._wait_for_pending(result, no_ack=no_ack, **kwargs):
             while bucket:
                 node = bucket.popleft()
@@ -269,6 +269,7 @@ class BaseResultConsumer:
                     result.on_ready, timeout=timeout,
                     on_interval=on_interval):
                 yield
+                print(f"WAIT FOR PENDING {result} {result.on_ready}")
                 sleep(0)
         except socket.timeout:
             raise TimeoutError('The operation timed out.')

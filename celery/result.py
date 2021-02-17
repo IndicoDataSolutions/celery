@@ -218,7 +218,6 @@ class AsyncResult(ResultBase):
             if propagate:
                 self.maybe_throw(callback=callback)
             return self.result
-
         self.backend.add_pending_result(self)
         return self.backend.wait_for_pending(
             self, timeout=timeout,
