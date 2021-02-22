@@ -269,7 +269,6 @@ class BaseResultConsumer:
                     result.on_ready, timeout=timeout,
                     on_interval=on_interval):
                 yield
-                print(f"WAIT FOR PENDING {result} {result.on_ready}")
                 sleep(0)
         except socket.timeout:
             raise TimeoutError('The operation timed out.')
