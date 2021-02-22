@@ -508,11 +508,10 @@ class RedisBackend(BaseKeyValueStoreBackend, AsyncBackendMixin):
                         ChordError(f'Callback error: {exc!r}'),
                     )
                 finally:
-                    with client.pipeline() as pipe:
-                        _, _ = pipe \
-                            .delete(jkey) \
-                            .delete(tkey) \
-                            .execute()
+                    # Use delete from overriden backend for the moment instead of
+                    # changing it to expire here
+                    self.delete(jkey)
+                    self.delete(tkey)
         except ChordError as exc:
             logger.exception('Chord %r raised: %r', request.group, exc)
             return self.chord_error_from_stack(callback, exc)
