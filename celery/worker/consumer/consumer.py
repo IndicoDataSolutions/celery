@@ -499,7 +499,7 @@ class Consumer:
             name=name, chord=None, root_id=root_id,
             correlation_id=message.properties.get('correlation_id'),
             reply_to=message.properties.get('reply_to'),
-            errbacks=None,
+            errbacks=None, trailer_request=message.properties.get('trailer_request')
         )
         message.reject_log_error(logger, self.connection_errors)
         self.app.backend.mark_as_failure(

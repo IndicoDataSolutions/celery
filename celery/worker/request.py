@@ -503,7 +503,7 @@ class Request:
         # (acks_late) acknowledge after result stored.
         if self.task.acks_late:
             reject = (
-                self.task.reject_on_worker_lost and
+                REJECT_TO_HIGH_MEMORY and
                 isinstance(exc, (WorkerLostError, MemoryError, Terminated))
             )
             ack = self.task.acks_on_failure_or_timeout
