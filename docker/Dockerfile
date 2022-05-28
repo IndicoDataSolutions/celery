@@ -1,4 +1,4 @@
-FROM debian:bullseye-slim
+FROM debian:11.3-slim
 
 ENV PYTHONUNBUFFERED 1
 ENV PYTHONIOENCODING UTF-8
