@@ -31,7 +31,7 @@ steps:
       REPOSITORY_USERNAME:
         from_secret: GEMFURY_TOKEN
     commands:
-      - "semantic-release publish -D commit_subject='{version} [CI SKIP]'"
+      - semantic-release publish -D commit_subject="{version} [CI SKIP]"
     when:
       branch:
         - main
