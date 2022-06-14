@@ -2,6 +2,10 @@
 
 <!--next-version-placeholder-->
 
+## v5.3.0-pre1+drone.3 (2022-06-14)
+### Fix
+* Ver diff ([`ec06113`](https://github.com/IndicoDataSolutions/celery/commit/ec06113626776668c59b136e368500b73ffd5b8a))
+
 ## v5.3.0-pre1+drone.2 (2022-06-14)
 ### Fix
 * Update pyproject ([`fed8c87`](https://github.com/IndicoDataSolutions/celery/commit/fed8c874f79eb792b1ef4309aa4cccc5355623dd))
