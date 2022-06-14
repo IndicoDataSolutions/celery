@@ -2,6 +2,10 @@
 
 <!--next-version-placeholder-->
 
+## v5.3.0-pre1+drone.7 (2022-06-14)
+### Fix
+* Where version is updated ([`4fe755d`](https://github.com/IndicoDataSolutions/celery/commit/4fe755d92e08d1ef46743ee4cdb6681708656698))
+
 ## v5.3.0-pre1+drone.6 (2022-06-14)
 ### Fix
 * Get version from pyproject instead of init ([`4c37455`](https://github.com/IndicoDataSolutions/celery/commit/4c374552f54426acd5bd75a04742b7d7d4b99df2))
