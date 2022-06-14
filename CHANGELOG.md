@@ -2,6 +2,10 @@
 
 <!--next-version-placeholder-->
 
+## v5.3.0-pre1+drone.4 (2022-06-14)
+### Fix
+* Package update with correct name ([`d2683ad`](https://github.com/IndicoDataSolutions/celery/commit/d2683adac022e417fd949cb1853ffb9aade11638))
+
 ## v5.3.0-pre1+drone.3 (2022-06-14)
 ### Fix
 * Ver diff ([`ec06113`](https://github.com/IndicoDataSolutions/celery/commit/ec06113626776668c59b136e368500b73ffd5b8a))
