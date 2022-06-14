@@ -2,6 +2,10 @@
 
 <!--next-version-placeholder-->
 
+## v5.3.0-pre1+drone.11 (2022-06-14)
+### Fix
+* Dep version ([`9ca78a2`](https://github.com/IndicoDataSolutions/celery/commit/9ca78a21dd5b0f37887f9f7e9543486a3a21f081))
+
 ## v5.3.0-pre1+drone.10 (2022-06-14)
 ### Fix
 * Bump version ([`32b6c64`](https://github.com/IndicoDataSolutions/celery/commit/32b6c64f3f02bcc9833c219cfc86d43a75531ee1))
