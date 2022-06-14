@@ -6,7 +6,7 @@ authors = ["Indico Data <engineering@indicodata.ai>"]
 packages = [ {include = "celery"}]
 
 [tool.poetry.dependencies]
-ptyz = "^2021.3"
+pytz = "^2021.3"
 billiard = "^3.6.4.0"
 kombu = "^5.2.3"
 vine = "^5.0.0"
