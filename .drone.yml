@@ -34,7 +34,7 @@ steps:
       - "semantic-release publish -D commit_subject='{version} [CI SKIP]'"
     when:
       branch:
-        - development
+        - main
 
   # if on a feature branch do a prerelease
   - name: prerelease
