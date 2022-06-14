@@ -2,6 +2,10 @@
 
 <!--next-version-placeholder-->
 
+## v5.3.0-pre1+bumpversion.0 (2022-06-14)
+### Feature
+* Bump version to 5.4.0 ([`04f71ee`](https://github.com/IndicoDataSolutions/celery/commit/04f71ee1699ed32b419211720ebb80f4c5c18576))
+
 ## v5.3.0-pre1+drone.12 (2022-06-14)
 ### Fix
 * Make main release ([`f8fae1c`](https://github.com/IndicoDataSolutions/celery/commit/f8fae1cb169e2a2adecfe7c44dcac54c484aa4ff))
