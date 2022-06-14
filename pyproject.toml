@@ -1,3 +1,10 @@
+[tool.poetry]
+name = "celery"
+version = "0.0.0"
+description = "Indico shared utilities"
+authors = ["Indico Data <engineering@indicodata.ai>"]
+packages = [ {include = "celery"}]
+
 [tool.pytest.ini_options]
 addopts = "--strict-markers"
 testpaths = "t/unit/"

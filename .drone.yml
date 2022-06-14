@@ -11,14 +11,6 @@ trigger:
 image_pull_secrets:
   - DOCKER_CONFIG_JSON
 
-# resource requests are defined on the pipeline level
-resources:
-  requests:
-  {{ if .input.cpuRequest }}
-    cpu: {{ .input.cpuRequest }}
-  {{ else }}
-    cpu: 1000
-  {{ end }}
 
   steps:
   # when merge to dev do a real release
