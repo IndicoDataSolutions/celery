@@ -2,6 +2,10 @@
 
 <!--next-version-placeholder-->
 
+## v5.3.0-pre1+drone.9 (2022-06-14)
+### Fix
+* Name ([`5b4ce90`](https://github.com/IndicoDataSolutions/celery/commit/5b4ce906597ec55f7393b2f5b01c25156198e6cf))
+
 ## v5.3.0-pre1+drone.8 (2022-06-14)
 ### Fix
 * Name in setup ([`4420913`](https://github.com/IndicoDataSolutions/celery/commit/4420913fb594faa284e448c2d4d73878cd7a150a))
