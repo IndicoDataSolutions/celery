@@ -2,6 +2,10 @@
 
 <!--next-version-placeholder-->
 
+## v5.3.0-pre1+drone.2 (2022-06-14)
+### Fix
+* Update pyproject ([`fed8c87`](https://github.com/IndicoDataSolutions/celery/commit/fed8c874f79eb792b1ef4309aa4cccc5355623dd))
+
 ## v5.3.0-pre1+drone.1 (2022-06-14)
 ### Fix
 * Add indico prefix ([`28d4633`](https://github.com/IndicoDataSolutions/celery/commit/28d463345b52f0d7bde4b6183da2ecc7c5cc94bb))
