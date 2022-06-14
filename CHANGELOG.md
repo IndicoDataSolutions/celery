@@ -2,6 +2,16 @@
 
 <!--next-version-placeholder-->
 
+## v5.3.0-pre1+drone.10 (2022-06-14)
+### Fix
+* Bump version ([`32b6c64`](https://github.com/IndicoDataSolutions/celery/commit/32b6c64f3f02bcc9833c219cfc86d43a75531ee1))
+* Bump to 9 ([`678d2ee`](https://github.com/IndicoDataSolutions/celery/commit/678d2ee0eac5e62ec8a789128df910f32071a81f))
+* Update version in init ([`696d2c0`](https://github.com/IndicoDataSolutions/celery/commit/696d2c01ae1a8e03212fcb220a20eefe694aada0))
+* Back to pyproject ([`ff458a5`](https://github.com/IndicoDataSolutions/celery/commit/ff458a56c99788181ea8c560a94bf754a330d2e3))
+* Version ([`bae3e8a`](https://github.com/IndicoDataSolutions/celery/commit/bae3e8a4cfac97b4ba10c49724bb061f19285702))
+* Syntax ([`7e9246a`](https://github.com/IndicoDataSolutions/celery/commit/7e9246ab6e190d4c55f793385339666611691841))
+* Verify version update ([`bce58eb`](https://github.com/IndicoDataSolutions/celery/commit/bce58eb8166627213728e4d7dc5fa7dc4e49e6e0))
+
 ## v5.3.0-pre1+drone.3 (2022-06-14)
 ### Fix
 * Update version in init ([`696d2c0`](https://github.com/IndicoDataSolutions/celery/commit/696d2c01ae1a8e03212fcb220a20eefe694aada0))
