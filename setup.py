@@ -148,12 +148,12 @@ class pytest(setuptools.command.test.test):
 
 # -*- %%% -*-
 
-
+__version__ = "5.3.0-pre1+drone.5"
 meta = parse_dist_meta()
 setuptools.setup(
     name=NAME,
     packages=setuptools.find_packages(exclude=['t', 't.*']),
-    version=meta['version'],
+    version=__version__,
     description=meta['doc'],
     long_description=long_description(),
     keywords=meta['keywords'],

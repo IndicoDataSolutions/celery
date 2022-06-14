@@ -13,6 +13,7 @@ xdfail_strict=true
 markers = ["sleepdeprived_patched_module", "masked_modules", "patched_environ", "patched_module"]
 
 [tool.semantic_release]
+version_variable = ["setup.py:__version__"]
 version_toml = ["pyproject.toml:tool.poetry.version"]
 branch = "development"
 upload_to_respository=true
