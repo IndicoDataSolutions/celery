@@ -6,7 +6,7 @@ xdfail_strict=true
 markers = ["sleepdeprived_patched_module", "masked_modules", "patched_environ", "patched_module"]
 
 [tool.semantic_release]
-version_variable = "setup.py:__version__"
+version_variable = "celery/__init__.py:__version__"
 branch = "development"
 upload_to_respository=true
 repository_url="https://push.fury.io/indico"

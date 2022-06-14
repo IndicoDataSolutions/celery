@@ -153,7 +153,7 @@ meta = parse_dist_meta()
 setuptools.setup(
     name="indicodata-celery",
     packages=setuptools.find_packages(exclude=['t', 't.*']),
-    version=__version__,
+    version=meta["version"],
     description=meta['doc'],
     long_description=long_description(),
     keywords=meta['keywords'],
