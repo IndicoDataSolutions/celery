@@ -7,7 +7,7 @@ import sys
 import setuptools
 import setuptools.command.test
 
-NAME = 'celery'
+NAME = 'indicodata-celery'
 
 # -*- Extras -*-
 
