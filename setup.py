@@ -7,7 +7,7 @@ import sys
 import setuptools
 import setuptools.command.test
 
-NAME = 'indicodata-celery'
+NAME = 'celery'
 
 # -*- Extras -*-
 
@@ -151,7 +151,7 @@ class pytest(setuptools.command.test.test):
 __version__ = "5.3.0-pre1+drone.5"
 meta = parse_dist_meta()
 setuptools.setup(
-    name=NAME,
+    name="indicodata-celery",
     packages=setuptools.find_packages(exclude=['t', 't.*']),
     version=__version__,
     description=meta['doc'],
