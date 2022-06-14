@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "celery"
-version = "0.0.0"
+version = "5.2.3"
 description = "Indico shared utilities"
 authors = ["Indico Data <engineering@indicodata.ai>"]
 packages = [ {include = "celery"}]
