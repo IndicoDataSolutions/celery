@@ -11,9 +11,8 @@ trigger:
 image_pull_secrets:
   - DOCKER_CONFIG_JSON
 
-
-  steps:
-  # when merge to dev do a real release
+steps:
+# when merge to dev do a real release
   - name: release
     image: harbor.devops.indico.io/indico/semantic-releaser:v4
     settings:
