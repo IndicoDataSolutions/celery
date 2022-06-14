@@ -2,6 +2,10 @@
 
 <!--next-version-placeholder-->
 
+## v5.3.0-pre1+drone.12 (2022-06-14)
+### Fix
+* Make main release ([`f8fae1c`](https://github.com/IndicoDataSolutions/celery/commit/f8fae1cb169e2a2adecfe7c44dcac54c484aa4ff))
+
 ## v5.3.0-pre1+drone.11 (2022-06-14)
 ### Fix
 * Dep version ([`9ca78a2`](https://github.com/IndicoDataSolutions/celery/commit/9ca78a21dd5b0f37887f9f7e9543486a3a21f081))
