@@ -18,4 +18,3 @@ version_toml = ["pyproject.toml:tool.poetry.version"]
 branch = "development"
 upload_to_respository=true
 repository_url="https://push.fury.io/indico"
-
