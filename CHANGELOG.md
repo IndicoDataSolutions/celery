@@ -2,6 +2,10 @@
 
 <!--next-version-placeholder-->
 
+## v5.3.0-pre1+bumpversion.3 (2022-06-16)
+### Fix
+* Pyproject ([`27cdfa9`](https://github.com/IndicoDataSolutions/celery/commit/27cdfa99195d0041dd2eabba01f5578ba04d6006))
+
 ## v5.3.0-pre1+bumpversion.2 (2022-06-16)
 ### Fix
 * Trigger ([`8426d2a`](https://github.com/IndicoDataSolutions/celery/commit/8426d2aead1034a3d9544c426f9687e997104ed9))
