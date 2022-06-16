@@ -2,6 +2,22 @@
 
 <!--next-version-placeholder-->
 
+## v5.3.0-pre1+bumpversion.3 (2022-06-16)
+### Fix
+* Pyproject ([`27cdfa9`](https://github.com/IndicoDataSolutions/celery/commit/27cdfa99195d0041dd2eabba01f5578ba04d6006))
+
+## v5.3.0-pre1+bumpversion.2 (2022-06-16)
+### Fix
+* Trigger ([`8426d2a`](https://github.com/IndicoDataSolutions/celery/commit/8426d2aead1034a3d9544c426f9687e997104ed9))
+
+## v5.3.0-pre1+bumpversion.1 (2022-06-16)
+### Fix
+* Template releases ([`a2978a4`](https://github.com/IndicoDataSolutions/celery/commit/a2978a46d7f544c83668b0dbc515f16704a49def))
+
+## v5.3.0-pre1+bumpversion.0 (2022-06-14)
+### Feature
+* Bump version to 5.4.0 ([`04f71ee`](https://github.com/IndicoDataSolutions/celery/commit/04f71ee1699ed32b419211720ebb80f4c5c18576))
+
 ## v5.3.0-pre1+drone.12 (2022-06-14)
 ### Fix
 * Make main release ([`f8fae1c`](https://github.com/IndicoDataSolutions/celery/commit/f8fae1cb169e2a2adecfe7c44dcac54c484aa4ff))
