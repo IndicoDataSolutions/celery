@@ -34,7 +34,8 @@ steps:
     commands:
       - semantic-release publish 
     when:
-      branch: main
+      branch:
+        - main
 
   # if on a feature branch do a prerelease
   - name: prerelease
