@@ -4,9 +4,10 @@ name: publish
 
 trigger:
   event:
-    - push
-  exclude:
-    - pull_request
+    include:
+      - push
+    exclude:
+      - pull_request
 
 image_pull_secrets:
   - DOCKER_CONFIG_JSON
