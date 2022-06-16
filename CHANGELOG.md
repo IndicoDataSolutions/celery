@@ -2,6 +2,10 @@
 
 <!--next-version-placeholder-->
 
+## v5.3.0-pre1+bumpversion.1 (2022-06-16)
+### Fix
+* Template releases ([`a2978a4`](https://github.com/IndicoDataSolutions/celery/commit/a2978a46d7f544c83668b0dbc515f16704a49def))
+
 ## v5.3.0-pre1+bumpversion.0 (2022-06-14)
 ### Feature
 * Bump version to 5.4.0 ([`04f71ee`](https://github.com/IndicoDataSolutions/celery/commit/04f71ee1699ed32b419211720ebb80f4c5c18576))
