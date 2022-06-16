@@ -17,7 +17,7 @@ from . import local
 
 SERIES = "dawn-chorus"
 
-__version__ = "5.3.0-pre1+drone.9"
+__version__ = "5.3.0"
 __author__ = "Ask Solem"
 __contact__ = "auvipy@gmail.com"
 __homepage__ = "http://celeryproject.org"
@@ -96,8 +96,16 @@ if STATICA_HACK:  # pragma: no cover
     from celery.app.task import Task
     from celery.app.utils import bugreport
     from celery.canvas import group  # noqa
-    from celery.canvas import (chain, chord, chunks, maybe_signature,
-                               signature, subtask, xmap, xstarmap)
+    from celery.canvas import (
+        chain,
+        chord,
+        chunks,
+        maybe_signature,
+        signature,
+        subtask,
+        xmap,
+        xstarmap,
+    )
     from celery.utils import uuid
 
 # Eventlet/gevent patching must happen before importing
