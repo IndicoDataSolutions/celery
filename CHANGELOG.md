@@ -2,6 +2,10 @@
 
 <!--next-version-placeholder-->
 
+## v5.3.1-pre1+fixbilliard.0 (2022-06-16)
+### Fix
+* Billiard version ([`5c9b0b4`](https://github.com/IndicoDataSolutions/celery/commit/5c9b0b49a4e0f3038314becb6570603b39dd0d22))
+
 ## v5.3.0 (2022-06-16)
 
 
