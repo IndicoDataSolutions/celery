@@ -2,6 +2,10 @@
 
 <!--next-version-placeholder-->
 
+## v5.3.0-pre1+bumpversion.2 (2022-06-16)
+### Fix
+* Trigger ([`8426d2a`](https://github.com/IndicoDataSolutions/celery/commit/8426d2aead1034a3d9544c426f9687e997104ed9))
+
 ## v5.3.0-pre1+bumpversion.1 (2022-06-16)
 ### Fix
 * Template releases ([`a2978a4`](https://github.com/IndicoDataSolutions/celery/commit/a2978a46d7f544c83668b0dbc515f16704a49def))
