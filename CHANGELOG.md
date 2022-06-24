@@ -2,6 +2,10 @@
 
 <!--next-version-placeholder-->
 
+## v5.3.1-pre1+fixbilliard.1 (2022-06-24)
+### Fix
+* Add celery bin ([`e0c4cdf`](https://github.com/IndicoDataSolutions/celery/commit/e0c4cdfbb2b270d1155c363e9c3369afe7919b59))
+
 ## v5.3.1-pre1+fixbilliard.0 (2022-06-16)
 ### Fix
 * Billiard version ([`5c9b0b4`](https://github.com/IndicoDataSolutions/celery/commit/5c9b0b49a4e0f3038314becb6570603b39dd0d22))
