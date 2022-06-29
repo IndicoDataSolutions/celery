@@ -2,6 +2,9 @@
 
 <!--next-version-placeholder-->
 
+## v5.4.0 (2022-06-29)
+
+
 ## v5.3.1-pre1+fixbilliard.2 (2022-06-24)
 ### Fix
 * Setuptools ([`d73db0e`](https://github.com/IndicoDataSolutions/celery/commit/d73db0ed2cf688b2edadf72498e56c19e392ac57))
