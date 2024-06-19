@@ -5,3 +5,4 @@ codecov
 -r extras/pymemcache.txt
 -r extras/thread.txt
 -r extras/auth.txt
+urllib3>=2.2.2 # not directly required, pinned by Snyk to avoid a vulnerability
