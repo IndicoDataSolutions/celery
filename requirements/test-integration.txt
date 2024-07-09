@@ -3,3 +3,4 @@
 -r extras/auth.txt
 -r extras/memcache.txt
 pytest-rerunfailures>=6.0
+zipp>=3.19.1 # not directly required, pinned by Snyk to avoid a vulnerability
