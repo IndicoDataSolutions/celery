@@ -9,3 +9,4 @@ sphinx2rst>=1.0
 # Disable cyanide until it's fully updated.
 # cyanide>=1.0.1
 bumpversion
+zipp>=3.19.1 # not directly required, pinned by Snyk to avoid a vulnerability
