@@ -1,3 +1,4 @@
 django>=2.2.1
 sqlalchemy>=1.0.14
 celery>=5.0.5
+zipp>=3.19.1 # not directly required, pinned by Snyk to avoid a vulnerability
