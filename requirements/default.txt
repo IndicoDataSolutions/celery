@@ -7,3 +7,4 @@ click-didyoumean>=0.0.3
 click-repl>=0.2.0
 click-plugins>=1.1.1
 setuptools
+zipp>=3.19.1 # not directly required, pinned by Snyk to avoid a vulnerability
