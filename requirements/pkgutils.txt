@@ -1,5 +1,5 @@
 setuptools
-wheel>=0.33.1
+wheel>=0.38.0
 flake8>=3.8.3
 flakeplus>=1.1
 flake8-docstrings~=1.5
