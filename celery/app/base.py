@@ -1,27 +1,31 @@
 """Actual App instance implementation."""
+import functools
+import importlib
 import inspect
 import os
 import sys
 import threading
+import typing
 import warnings
 from collections import UserDict, defaultdict, deque
 from datetime import datetime
+from datetime import timezone as datetime_timezone
 from operator import attrgetter
 
 from click.exceptions import Exit
-from kombu import pools
+from dateutil.parser import isoparse
+from kombu import Exchange, pools
 from kombu.clocks import LamportClock
 from kombu.common import oid_from
+from kombu.transport.native_delayed_delivery import calculate_routing_key
 from kombu.utils.compat import register_after_fork
 from kombu.utils.objects import cached_property
 from kombu.utils.uuid import uuid
 from vine import starpromise
 
 from celery import platforms, signals
-from celery._state import (_announce_app_finalized, _deregister_app,
-                           _register_app, _set_current_app, _task_stack,
-                           connect_on_app_finalize, get_current_app,
-                           get_current_worker_task, set_default_app)
+from celery._state import (_announce_app_finalized, _deregister_app, _register_app, _set_current_app, _task_stack,
+                           connect_on_app_finalize, get_current_app, get_current_worker_task, set_default_app)
 from celery.exceptions import AlwaysEagerIgnored, ImproperlyConfigured
 from celery.loaders import get_loader_cls
 from celery.local import PromiseProxy, maybe_evaluate
@@ -34,18 +38,22 @@ from celery.utils.log import get_logger
 from celery.utils.objects import FallbackContext, mro_lookup
 from celery.utils.time import maybe_make_aware, timezone, to_utc
 
+from ..utils.annotations import annotation_is_class, annotation_issubclass, get_optional_arg
+from ..utils.quorum_queues import detect_quorum_queues
 # Load all builtin tasks
-from . import builtins  # noqa
-from . import backends
+from . import backends, builtins  # noqa
 from .annotations import prepare as prepare_annotations
 from .autoretry import add_autoretry_behaviour
 from .defaults import DEFAULT_SECURITY_DIGEST, find_deprecated_settings
 from .registry import TaskRegistry
-from .utils import (AppPickler, Settings, _new_key_to_old, _old_key_to_new,
-                    _unpickle_app, _unpickle_app_v2, appstr, bugreport,
-                    detect_settings)
+from .utils import (AppPickler, Settings, _new_key_to_old, _old_key_to_new, _unpickle_app, _unpickle_app_v2, appstr,
+                    bugreport, detect_settings)
 
-__all__ = ("Celery",)
+if typing.TYPE_CHECKING:  # pragma: no cover  # codecov does not capture this
+    # flake8 marks the BaseModel import as unused, because the actual typehint is quoted.
+    from pydantic import BaseModel  # noqa: F401
+
+__all__ = ('Celery',)
 
 logger = get_logger(__name__)
 
@@ -92,7 +100,88 @@ def _after_fork_cleanup_app(app):
     try:
         app._after_fork()
     except Exception as exc:  # pylint: disable=broad-except
-        logger.info("after forker raised exception: %r", exc, exc_info=1)
+        logger.info('after forker raised exception: %r', exc, exc_info=1)
+
+
+def pydantic_wrapper(
+    app: "Celery",
+    task_fun: typing.Callable[..., typing.Any],
+    task_name: str,
+    strict: bool = True,
+    context: typing.Optional[typing.Dict[str, typing.Any]] = None,
+    dump_kwargs: typing.Optional[typing.Dict[str, typing.Any]] = None
+):
+    """Wrapper to validate arguments and serialize return values using Pydantic."""
+    try:
+        pydantic = importlib.import_module('pydantic')
+    except ModuleNotFoundError as ex:
+        raise ImproperlyConfigured('You need to install pydantic to use pydantic model serialization.') from ex
+
+    BaseModel: typing.Type['BaseModel'] = pydantic.BaseModel  # noqa: F811  # only defined when type checking
+
+    if context is None:
+        context = {}
+    if dump_kwargs is None:
+        dump_kwargs = {}
+    dump_kwargs.setdefault('mode', 'json')
+
+    # If a file uses `from __future__ import annotations`, all annotations will
+    # be strings. `typing.get_type_hints()` can turn these back into real
+    # types, but can also sometimes fail due to circular imports. Try that
+    # first, and fall back to annotations from `inspect.signature()`.
+    task_signature = inspect.signature(task_fun)
+
+    try:
+        type_hints = typing.get_type_hints(task_fun)
+    except (NameError, AttributeError, TypeError):
+        # Fall back to raw annotations from inspect if get_type_hints fails
+        type_hints = None
+
+    @functools.wraps(task_fun)
+    def wrapper(*task_args, **task_kwargs):
+        # Validate task parameters if type hinted as BaseModel
+        bound_args = task_signature.bind(*task_args, **task_kwargs)
+        for arg_name, arg_value in bound_args.arguments.items():
+            if type_hints and arg_name in type_hints:
+                arg_annotation = type_hints[arg_name]
+            else:
+                arg_annotation = task_signature.parameters[arg_name].annotation
+
+            optional_arg = get_optional_arg(arg_annotation)
+            if optional_arg is not None and arg_value is not None:
+                arg_annotation = optional_arg
+
+            if annotation_issubclass(arg_annotation, BaseModel):
+                bound_args.arguments[arg_name] = arg_annotation.model_validate(
+                    arg_value,
+                    strict=strict,
+                    context={**context, 'celery_app': app, 'celery_task_name': task_name},
+                )
+
+        # Call the task with (potentially) converted arguments
+        returned_value = task_fun(*bound_args.args, **bound_args.kwargs)
+
+        # Dump Pydantic model if the returned value is an instance of pydantic.BaseModel *and* its
+        # class matches the typehint
+        if type_hints and 'return' in type_hints:
+            return_annotation = type_hints['return']
+        else:
+            return_annotation = task_signature.return_annotation
+
+        optional_return_annotation = get_optional_arg(return_annotation)
+        if optional_return_annotation is not None:
+            return_annotation = optional_return_annotation
+
+        if (
+            annotation_is_class(return_annotation)
+            and isinstance(returned_value, BaseModel)
+            and isinstance(returned_value, return_annotation)
+        ):
+            return returned_value.model_dump(**dump_kwargs)
+
+        return returned_value
+
+    return wrapper
 
 
 class PendingConfiguration(UserDict, AttributeDictMixin):
@@ -250,6 +339,7 @@ class Celery:
     ):
 
         self._local = threading.local()
+        self._backend_cache = None
 
         self.clock = LamportClock()
         self.main = main
@@ -258,6 +348,12 @@ class Celery:
         self.loader_cls = loader or self._get_default_loader()
         self.log_cls = log or self.log_cls
         self.control_cls = control or self.control_cls
+        self._custom_task_cls_used = (
+            # Custom task class provided as argument
+            bool(task_cls)
+            # subclass of Celery with a task_cls attribute
+            or self.__class__ is not Celery and hasattr(self.__class__, 'task_cls')
+        )
         self.task_cls = task_cls or self.task_cls
         self.set_as_current = set_as_current
         self.registry_cls = symbol_by_name(self.registry_cls)
@@ -273,7 +369,7 @@ class Celery:
         self._pending_periodic_tasks = deque()
 
         self.finalized = False
-        self._finalize_mutex = threading.Lock()
+        self._finalize_mutex = threading.RLock()
         self._pending = deque()
         self._tasks = tasks
         if not isinstance(self._tasks, TaskRegistry):
@@ -483,32 +579,41 @@ class Celery:
             )
         return inner_create_task_cls(**opts)
 
-    def _task_from_fun(self, fun, name=None, base=None, bind=False, **options):
+    def type_checker(self, fun, bound=False):
+        return staticmethod(head_from_fun(fun, bound=bound))
+
+    def _task_from_fun(
+        self,
+        fun,
+        name=None,
+        base=None,
+        bind=False,
+        pydantic: bool = False,
+        pydantic_strict: bool = False,
+        pydantic_context: typing.Optional[typing.Dict[str, typing.Any]] = None,
+        pydantic_dump_kwargs: typing.Optional[typing.Dict[str, typing.Any]] = None,
+        **options,
+    ):
         if not self.finalized and not self.autofinalize:
             raise RuntimeError("Contract breach: app not finalized")
         name = name or self.gen_task_name(fun.__name__, fun.__module__)
         base = base or self.Task
 
         if name not in self._tasks:
+            if pydantic is True:
+                fun = pydantic_wrapper(self, fun, name, pydantic_strict, pydantic_context, pydantic_dump_kwargs)
+
             run = fun if bind else staticmethod(fun)
-            task = type(
-                fun.__name__,
-                (base,),
-                dict(
-                    {
-                        "app": self,
-                        "name": name,
-                        "run": run,
-                        "_decorated": True,
-                        "__doc__": fun.__doc__,
-                        "__module__": fun.__module__,
-                        "__annotations__": fun.__annotations__,
-                        "__header__": staticmethod(head_from_fun(fun, bound=bind)),
-                        "__wrapped__": run,
-                    },
-                    **options,
-                ),
-            )()
+            task = type(fun.__name__, (base,), dict({
+                'app': self,
+                'name': name,
+                'run': run,
+                '_decorated': True,
+                '__doc__': fun.__doc__,
+                '__module__': fun.__module__,
+                '__annotations__': fun.__annotations__,
+                '__header__': self.type_checker(fun, bound=bind),
+                '__wrapped__': run}, **options))()
             # for some reason __qualname__ cannot be set in type()
             # so we have to set it here.
             try:
@@ -632,15 +737,9 @@ class Celery:
     def config_from_cmdline(self, argv, namespace="celery"):
         self._conf.update(self.loader.cmdline_config_parser(argv, namespace))
 
-    def setup_security(
-        self,
-        allowed_serializers=None,
-        key=None,
-        cert=None,
-        store=None,
-        digest=DEFAULT_SECURITY_DIGEST,
-        serializer="json",
-    ):
+    def setup_security(self, allowed_serializers=None, key=None, key_password=None, cert=None,
+                       store=None, digest=DEFAULT_SECURITY_DIGEST,
+                       serializer='json'):
         """Setup the message-signing serializer.
 
         This will affect all application instances (a global operation).
@@ -654,6 +753,8 @@ class Celery:
                 content_types that should be exempt from being disabled.
             key (str): Name of private key file to use.
                 Defaults to the :setting:`security_key` setting.
+            key_password (bytes): Password to decrypt the private key.
+                Defaults to the :setting:`security_key_password` setting.
             cert (str): Name of certificate file to use.
                 Defaults to the :setting:`security_certificate` setting.
             store (str): Directory containing certificates.
@@ -665,10 +766,8 @@ class Celery:
                 the serializers supported.  Default is ``json``.
         """
         from celery.security import setup_security
-
-        return setup_security(
-            allowed_serializers, key, cert, store, digest, serializer, app=self
-        )
+        return setup_security(allowed_serializers, key, key_password, cert,
+                              store, digest, serializer, app=self)
 
     def autodiscover_tasks(self, packages=None, related_name="tasks", force=False):
         """Auto-discover task modules.
@@ -744,39 +843,15 @@ class Celery:
             related_name=related_name,
         )
 
-    def send_task(
-        self,
-        name,
-        args=None,
-        kwargs=None,
-        countdown=None,
-        eta=None,
-        task_id=None,
-        producer=None,
-        connection=None,
-        router=None,
-        result_cls=None,
-        expires=None,
-        publisher=None,
-        link=None,
-        link_error=None,
-        add_to_parent=True,
-        group_id=None,
-        group_index=None,
-        trailer_request=None,
-        retries=0,
-        chord=None,
-        reply_to=None,
-        time_limit=None,
-        soft_time_limit=None,
-        root_id=None,
-        parent_id=None,
-        route_name=None,
-        shadow=None,
-        chain=None,
-        task_type=None,
-        **options,
-    ):
+    def send_task(self, name, args=None, kwargs=None, countdown=None,
+                  eta=None, task_id=None, producer=None, connection=None,
+                  router=None, result_cls=None, expires=None,
+                  publisher=None, link=None, link_error=None,
+                  add_to_parent=True, group_id=None, group_index=None,
+                  retries=0, chord=None,
+                  reply_to=None, time_limit=None, soft_time_limit=None,
+                  root_id=None, parent_id=None, route_name=None,
+                  shadow=None, chain=None, task_type=None, replaced_task_nesting=0, **options):
         """Send task by name.
 
         Supports the same arguments as :meth:`@-Task.apply_async`.
@@ -799,11 +874,51 @@ class Celery:
                 stacklevel=2,
             )
 
-        ignore_result = options.pop("ignore_result", False)
-        options = router.route(options, route_name or name, args, kwargs, task_type)
+        ignore_result = options.pop('ignore_result', False)
+        options = router.route(
+            options, route_name or name, args, kwargs, task_type)
+
+        driver_type = self.producer_pool.connections.connection.transport.driver_type
+
+        if (eta or countdown) and detect_quorum_queues(self, driver_type)[0]:
+
+            queue = options.get("queue")
+            exchange_type = queue.exchange.type if queue else options["exchange_type"]
+            routing_key = queue.routing_key if queue else options["routing_key"]
+            exchange_name = queue.exchange.name if queue else options["exchange"]
+
+            if exchange_type != 'direct':
+                if eta:
+                    if isinstance(eta, str):
+                        eta = isoparse(eta)
+                    countdown = (maybe_make_aware(eta) - self.now()).total_seconds()
+
+                if countdown:
+                    if countdown > 0:
+                        routing_key = calculate_routing_key(int(countdown), routing_key)
+                        exchange = Exchange(
+                            'celery_delayed_27',
+                            type='topic',
+                        )
+                        options.pop("queue", None)
+                        options['routing_key'] = routing_key
+                        options['exchange'] = exchange
+
+            else:
+                logger.warning(
+                    'Direct exchanges are not supported with native delayed delivery.\n'
+                    f'{exchange_name} is a direct exchange but should be a topic exchange or '
+                    'a fanout exchange in order for native delayed delivery to work properly.\n'
+                    'If quorum queues are used, this task may block the worker process until the ETA arrives.'
+                )
+
         if expires is not None:
             if isinstance(expires, datetime):
-                expires_s = (maybe_make_aware(expires) - self.now()).total_seconds()
+                expires_s = (maybe_make_aware(
+                    expires) - self.now()).total_seconds()
+            elif isinstance(expires, str):
+                expires_s = (maybe_make_aware(
+                    isoparse(expires)) - self.now()).total_seconds()
             else:
                 expires_s = expires
 
@@ -836,6 +951,7 @@ class Celery:
                         "priority", parent.request.delivery_info.get("priority")
                     )
 
+        # alias for 'task_as_v2'
         message = amqp.create_task_message(
             task_id,
             name,
@@ -860,9 +976,12 @@ class Celery:
             shadow,
             chain,
             ignore_result=ignore_result,
-            argsrepr=options.get("argsrepr"),
-            kwargsrepr=options.get("kwargsrepr"),
+            replaced_task_nesting=replaced_task_nesting, **options
         )
+
+        stamped_headers = options.pop('stamped_headers', [])
+        for stamp in stamped_headers:
+            options.pop(stamp)
 
         if connection:
             producer = amqp.Producer(connection, auto_declare=False)
@@ -1041,7 +1160,7 @@ class Celery:
 
     def now(self):
         """Return the current time and date as a datetime."""
-        now_in_utc = to_utc(datetime.utcnow())
+        now_in_utc = to_utc(datetime.now(datetime_timezone.utc))
         return now_in_utc.astimezone(self.timezone)
 
     def select_queues(self, queues=None):
@@ -1083,7 +1202,14 @@ class Celery:
             This is used by PendingConfiguration:
                 as soon as you access a key the configuration is read.
         """
-        conf = self._conf = self._load_config()
+        try:
+            conf = self._conf = self._load_config()
+        except AttributeError as err:
+            # AttributeError is not propagated, it is "handled" by
+            # PendingConfiguration parent class. This causes
+            # confusing RecursionError.
+            raise ModuleNotFoundError(*err.args) from err
+
         return conf
 
     def _load_config(self):
@@ -1117,7 +1243,8 @@ class Celery:
         # load lazy periodic tasks
         pending_beat = self._pending_periodic_tasks
         while pending_beat:
-            self._add_periodic_task(*pending_beat.popleft())
+            periodic_task_args, periodic_task_kwargs = pending_beat.popleft()
+            self._add_periodic_task(*periodic_task_args, **periodic_task_kwargs)
 
         self.on_after_configure.send(sender=self, source=self._conf)
         return self._conf
@@ -1135,14 +1262,22 @@ class Celery:
         kwargs["app"] = self
         return self._canvas.signature(*args, **kwargs)
 
-    def add_periodic_task(self, schedule, sig, args=(), kwargs=(), name=None, **opts):
+    def add_periodic_task(self, schedule, sig,
+                          args=(), kwargs=(), name=None, **opts):
+        """
+        Add a periodic task to beat schedule.
+
+        Celery beat store tasks based on `sig` or `name` if provided. Adding the
+        same signature twice make the second task override the first one. To
+        avoid the override, use distinct `name` for them.
+        """
         key, entry = self._sig_to_periodic_task_entry(
             schedule, sig, args, kwargs, name, **opts
         )
         if self.configured:
-            self._add_periodic_task(key, entry)
+            self._add_periodic_task(key, entry, name=name)
         else:
-            self._pending_periodic_tasks.append((key, entry))
+            self._pending_periodic_tasks.append([(key, entry), {"name": name}])
         return key
 
     def _sig_to_periodic_task_entry(
@@ -1162,7 +1297,13 @@ class Celery:
             "options": dict(sig.options, **opts),
         }
 
-    def _add_periodic_task(self, key, entry):
+    def _add_periodic_task(self, key, entry, name=None):
+        if name is None and key in self._conf.beat_schedule:
+            logger.warning(
+                f"Periodic task key='{key}' shadowed a previous unnamed periodic task."
+                " Pass a name kwarg to add_periodic_task to silence this warning."
+            )
+
         self._conf.beat_schedule[key] = entry
 
     def create_task_cls(self):
@@ -1377,13 +1518,30 @@ class Celery:
         return instantiate(self.amqp_cls, app=self)
 
     @property
+    def _backend(self):
+        """A reference to the backend object
+
+        Uses self._backend_cache if it is thread safe.
+        Otherwise, use self._local
+        """
+        if self._backend_cache is not None:
+            return self._backend_cache
+        return getattr(self._local, "backend", None)
+
+    @_backend.setter
+    def _backend(self, backend):
+        """Set the backend object on the app"""
+        if backend.thread_safe:
+            self._backend_cache = backend
+        else:
+            self._local.backend = backend
+
+    @property
     def backend(self):
         """Current backend instance."""
-        try:
-            return self._local.backend
-        except AttributeError:
-            self._local.backend = new_backend = self._get_backend()
-            return new_backend
+        if self._backend is None:
+            self._backend = self._get_backend()
+        return self._backend
 
     @property
     def conf(self):

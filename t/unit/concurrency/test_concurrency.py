@@ -111,7 +111,8 @@ class test_BasePool:
 
     def test_interface_info(self):
         assert BasePool(10).info == {
-            "max-concurrency": 10,
+            'implementation': 'celery.concurrency.base:BasePool',
+            'max-concurrency': 10,
         }
 
     def test_interface_flush(self):
@@ -162,11 +163,12 @@ class test_BasePool:
 class test_get_available_pool_names:
     def test_no_concurrent_futures__returns_no_threads_pool_name(self):
         expected_pool_names = (
-            "prefork",
-            "eventlet",
-            "gevent",
-            "solo",
-            "processes",
+            'prefork',
+            'eventlet',
+            'gevent',
+            'solo',
+            'processes',
+            'custom',
         )
         with patch.dict(sys.modules, {"concurrent.futures": None}):
             importlib.reload(concurrency)
@@ -174,12 +176,13 @@ class test_get_available_pool_names:
 
     def test_concurrent_futures__returns_threads_pool_name(self):
         expected_pool_names = (
-            "prefork",
-            "eventlet",
-            "gevent",
-            "solo",
-            "processes",
-            "threads",
+            'prefork',
+            'eventlet',
+            'gevent',
+            'solo',
+            'processes',
+            'threads',
+            'custom',
         )
         with patch.dict(sys.modules, {"concurrent.futures": Mock()}):
             importlib.reload(concurrency)
