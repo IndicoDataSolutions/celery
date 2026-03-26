@@ -7,3 +7,4 @@ sphinx-click==2.5.0
 -r deps/mock.txt
 -r extras/auth.txt
 -r extras/sphinxautobuild.txt
+requests>=2.33.0 # not directly required, pinned by Snyk to avoid a vulnerability
