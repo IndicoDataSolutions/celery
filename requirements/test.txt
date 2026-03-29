@@ -7,3 +7,4 @@ moto>=2.2.6
 pre-commit
 -r extras/yaml.txt
 -r extras/msgpack.txt
+cryptography>=46.0.6 # not directly required, pinned by Snyk to avoid a vulnerability
